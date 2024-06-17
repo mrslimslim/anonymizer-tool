@@ -1,5 +1,5 @@
 {
-  "name": "data-anonymizer",
+  "name": "anonymizer-tool",
   "version": "1.0.0",
   "description": "A powerful tool to anonymize sensitive data, allowing reversible decoding.",
   "main": "dist/data-anonymizer.js", 

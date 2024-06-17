@@ -1,7 +1,7 @@
 # Data Anonymizer
 
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
-[![npm version](https://badge.fury.io/js/data-anonymizer.svg)](https://badge.fury.io/js/data-anonymizer)
+[![npm version](https://badge.fury.io/js/anonymizer-tool.svg)](https://badge.fury.io/js/anonymizer-tool)
 
 ## 介绍
 
@@ -10,21 +10,21 @@ Data Anonymizer 是一款用于对文本中的敏感信息进行匿名化处理�
 ## 安装
 
 ```bash
-npm install data-anonymizer
+npm install anonymizer-tool
 ```
 
 或
 
 ```bash
-yarn add data-anonymizer
+yarn add anonymizer-tool
 ```
 
 ## 使用说明
 
-以下是如何使用 `data-anonymizer` 的示例代码：
+以下是如何使用 `anonymizer-tool` 的示例代码：
 
 ```javascript
-import Anonymizer from 'data-anonymizer';
+import Anonymizer from 'anonymizer-tool';
 
 const sampleText = '我的名字叫JameBruce,我的github地址是：github.com/mrslimslim, 我的邮箱地址是jamebruce89@gmail.com，我的博客地址是https://mmblog.com。';
 
