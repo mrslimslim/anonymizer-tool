@@ -171,6 +171,7 @@ var r={};Xr(r,{af_ZA:()=>B$4,ar:()=>Y$3,az:()=>U$2,base:()=>Mi$1,cs_CZ:()=>x$1,d
 class Anonymizer {
     constructor({ input = "", rules = [] }) {
         this.replacements = new Map();
+        this.typeMaps = new Map(); // 用于存储不同类型数据的映射关系
         this.decode = (anonymized) => {
             let decodedString = anonymized;
             for (const [replacement, original] of this.replacements) {
@@ -190,12 +191,6 @@ class Anonymizer {
                 replace: (raw) => f$8.internet.email(),
                 reg: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
             },
-            //   {
-            //     type: "domain",
-            //     replace: (raw) => faker.internet.domainName(),
-            //     // 要排除前面没有协议
-            //     reg: /(?<!https?:\/\/)[\w-]+\.[\w-]+\.[\w-]+\b/g,
-            //   },
             {
                 type: "phone",
                 replace: (raw) => {
@@ -229,13 +224,26 @@ class Anonymizer {
     mergeRules(defaultRules, rules) {
         return [...defaultRules, ...rules];
     }
+    getTypeMap(type) {
+        if (!this.typeMaps.has(type)) {
+            this.typeMaps.set(type, new Map());
+        }
+        return this.typeMaps.get(type);
+    }
     anonymize() {
         let replacedString = this.originalInput;
         for (const rule of this.rules) {
+            const typeMap = this.getTypeMap(rule.type); // 获取当前规则类型的映射关系
             replacedString = replacedString.replace(rule.reg, (match) => {
-                const replacement = rule.replace(match);
-                this.replacements.set(replacement, match);
-                return replacement;
+                if (typeMap.has(match)) {
+                    return typeMap.get(match);
+                }
+                else {
+                    const replacement = rule.replace(match);
+                    typeMap.set(match, replacement);
+                    this.replacements.set(replacement, match);
+                    return replacement;
+                }
             });
         }
         return replacedString;

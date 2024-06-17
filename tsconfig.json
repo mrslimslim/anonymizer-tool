@@ -5,6 +5,7 @@
       "outDir": "./dist",
       "strict": true,
       "moduleResolution": "node",
+      "declarationDir": "dist/types",  // 类型声明文件输出目录
       "esModuleInterop": true,
       "skipLibCheck": true,
       "forceConsistentCasingInFileNames": true,

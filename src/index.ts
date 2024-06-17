@@ -1,4 +1,4 @@
-import { fa, faker } from "@faker-js/faker";
+import { faker } from "@faker-js/faker";
 
 type Rule = {
   type: string;
@@ -16,6 +16,7 @@ class Anonymizer {
   private rules: Rule[];
   private anonymizedInput: string;
   private replacements: Map<string, string> = new Map();
+  private typeMaps: Map<string, Map<string, string>> = new Map(); // 用于存储不同类型数据的映射关系
 
   constructor({ input = "", rules = [] }: Options) {
     this.originalInput = input;
@@ -32,12 +33,6 @@ class Anonymizer {
         replace: (raw) => faker.internet.email(),
         reg: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
       },
-      //   {
-      //     type: "domain",
-      //     replace: (raw) => faker.internet.domainName(),
-      //     // 要排除前面没有协议
-      //     reg: /(?<!https?:\/\/)[\w-]+\.[\w-]+\.[\w-]+\b/g,
-      //   },
       {
         type: "phone",
         replace: (raw) => {
@@ -73,15 +68,31 @@ class Anonymizer {
     return [...defaultRules, ...rules];
   }
 
+  private getTypeMap(type: string): Map<string, string> {
+    if (!this.typeMaps.has(type)) {
+      this.typeMaps.set(type, new Map<string, string>());
+    }
+    return this.typeMaps.get(type)!;
+  }
+
   private anonymize(): string {
     let replacedString = this.originalInput;
+
     for (const rule of this.rules) {
+      const typeMap = this.getTypeMap(rule.type); // 获取当前规则类型的映射关系
+
       replacedString = replacedString.replace(rule.reg, (match) => {
-        const replacement = rule.replace(match);
-        this.replacements.set(replacement, match);
-        return replacement;
+        if (typeMap.has(match)) {
+          return typeMap.get(match)!;
+        } else {
+          const replacement = rule.replace(match);
+          typeMap.set(match, replacement);
+          this.replacements.set(replacement, match);
+          return replacement;
+        }
       });
     }
+
     return replacedString;
   }
 
