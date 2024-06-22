@@ -1,11 +1,11 @@
-# Data Anonymizer
+# Anonymizer Tool
 
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 [![npm version](https://badge.fury.io/js/anonymizer-tool.svg)](https://badge.fury.io/js/anonymizer-tool)
 
 ## 介绍
 
-Data Anonymizer 是一款用于对文本中的敏感信息进行匿名化处理的工具。它可以在不透露具体内容的情况下，保护你的数据免受泄露风险。此工具特别适合于那些需要使用OpenAI能力，而又担心数据安全的场景。
+Anonymizer Tool 是一款用于对文本中的敏感信息进行匿名化处理的工具。它可以在不透露具体内容的情况下，保护你的数据免受泄露风险。此工具特别适合于那些需要使用OpenAI能力，而又担心数据安全的场景。
 
 ## 安装
 
