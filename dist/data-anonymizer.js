@@ -173,11 +173,14 @@ class Anonymizer {
         this.replacements = new Map();
         this.typeMaps = new Map(); // 用于存储不同类型数据的映射关系
         this.decode = (anonymized) => {
-            let decodedString = anonymized;
-            for (const [replacement, original] of this.replacements) {
-                decodedString = decodedString.replace(replacement, original);
+            // 数据还原使用typeMaps 需要考虑里面会有重复的情况
+            const typeMaps = this.getTypeMaps();
+            for (const typeMap of typeMaps.values()) {
+                for (const [key, value] of typeMap.entries()) {
+                    anonymized = anonymized.replace(new RegExp(value, "g"), key);
+                }
             }
-            return decodedString;
+            return anonymized;
         };
         this.originalInput = input;
         this.rules = this.mergeRules(this.defaultRules(), rules);
@@ -187,9 +190,9 @@ class Anonymizer {
     defaultRules() {
         return [
             {
-                type: "email",
-                replace: (raw) => f$8.internet.email(),
-                reg: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+                type: "domain",
+                replace: (raw) => f$8.internet.domainName(),
+                reg: /\b(?!-)[A-Za-z0-9-]+([-.]{1}[a-z0-9]+)*\.[A-Za-z]{2,6}\b/g,
             },
             {
                 type: "phone",
@@ -210,11 +213,6 @@ class Anonymizer {
                 reg: /\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b/g,
             },
             {
-                type: "url",
-                replace: (raw) => f$8.internet.url(),
-                reg: /\bhttps?:\/\/[^\s]+/g,
-            },
-            {
                 type: "CVV",
                 replace: (raw) => f$8.finance.creditCardCVV(),
                 reg: /\b\d{3,4}\b/g,
@@ -229,6 +227,42 @@ class Anonymizer {
             this.typeMaps.set(type, new Map());
         }
         return this.typeMaps.get(type);
+    }
+    getTypeMaps() {
+        return this.typeMaps;
+    }
+    parseObject(val) {
+        if (typeof val !== "object") {
+            throw new Error("The input data must be an object");
+        }
+        return this.restoreFromStructData(val);
+    }
+    parseString(val) {
+        if (typeof val !== "string") {
+            throw new Error("The input data must be a string");
+        }
+        return this.restoreFromString(val);
+    }
+    restoreFromString(str) {
+        return this.decode(str);
+    }
+    // restore data from typeMap
+    restoreFromStructData(obj) {
+        const typeMaps = this.getTypeMaps();
+        for (const key in obj) {
+            if (typeof obj[key] === "object") {
+                this.restoreFromStructData(obj[key]);
+            }
+            else {
+                for (const typeMap of typeMaps.values()) {
+                    if (typeMap.has(obj[key])) {
+                        obj[key] = typeMap.get(obj[key]);
+                        break;
+                    }
+                }
+            }
+        }
+        return obj;
     }
     anonymize() {
         let replacedString = this.originalInput;

@@ -11,6 +11,10 @@ type Options = {
   rules: Rule[];
 };
 
+type StructData = {
+  [key: string | number | symbol]: any;
+};
+
 class Anonymizer {
   private originalInput: string;
   private rules: Rule[];
@@ -29,9 +33,9 @@ class Anonymizer {
   private defaultRules(): Rule[] {
     return [
       {
-        type: "email",
-        replace: (raw) => faker.internet.email(),
-        reg: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+        type: "domain",
+        replace: (raw) => faker.internet.domainName(),
+        reg: /\b(?!-)[A-Za-z0-9-]+([-.]{1}[a-z0-9]+)*\.[A-Za-z]{2,6}\b/g,
       },
       {
         type: "phone",
@@ -52,11 +56,6 @@ class Anonymizer {
         reg: /\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b/g,
       },
       {
-        type: "url",
-        replace: (raw) => faker.internet.url(),
-        reg: /\bhttps?:\/\/[^\s]+/g,
-      },
-      {
         type: "CVV",
         replace: (raw) => faker.finance.creditCardCVV(),
         reg: /\b\d{3,4}\b/g,
@@ -73,6 +72,46 @@ class Anonymizer {
       this.typeMaps.set(type, new Map<string, string>());
     }
     return this.typeMaps.get(type)!;
+  }
+
+  public getTypeMaps(): Map<string, Map<string, string>> {
+    return this.typeMaps;
+  }
+
+  public parseObject(val: StructData): StructData {
+    if (typeof val !== "object") {
+      throw new Error("The input data must be an object");
+    }
+    return this.restoreFromStructData(val);
+  }
+
+  public parseString(val: string): string {
+    if (typeof val !== "string") {
+      throw new Error("The input data must be a string");
+    }
+    return this.restoreFromString(val);
+  }
+
+  private restoreFromString(str: string): string {
+    return this.decode(str);
+  }
+
+  // restore data from typeMap
+  private restoreFromStructData(obj: StructData): StructData {
+    const typeMaps = this.getTypeMaps();
+    for (const key in obj) {
+      if (typeof obj[key] === "object") {
+        this.restoreFromStructData(obj[key]);
+      } else {
+        for (const typeMap of typeMaps.values()) {
+          if (typeMap.has(obj[key])) {
+            obj[key] = typeMap.get(obj[key]);
+            break;
+          }
+        }
+      }
+    }
+    return obj;
   }
 
   private anonymize(): string {
@@ -101,11 +140,14 @@ class Anonymizer {
   }
 
   public decode = (anonymized: string): string => {
-    let decodedString = anonymized;
-    for (const [replacement, original] of this.replacements) {
-      decodedString = decodedString.replace(replacement, original);
+    // 数据还原使用typeMaps 需要考虑里面会有重复的情况
+    const typeMaps = this.getTypeMaps();
+    for (const typeMap of typeMaps.values()) {
+      for (const [key, value] of typeMap.entries()) {
+        anonymized = anonymized.replace(new RegExp(value, "g"), key);
+      }
     }
-    return decodedString;
+    return anonymized;
   };
 }
 
